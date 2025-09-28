@@ -84,14 +84,26 @@ input/
 └── other_docs.txt   # Other documents
 ```
 
-### 4. Build Vector Index
+### 4. Download Cache Folder
+
+Download the pre-built cache folder to avoid long model download times:
+
+```bash
+# Download the .cache folder from Google Drive
+# Link: https://drive.google.com/file/d/1U6EnatdRLHZ4PT0VnNVdGp-asY_Q7BkU/view?usp=sharing
+
+# Extract the downloaded file to the project root
+# This will create the .cache/ directory with pre-downloaded models
+```
+
+### 5. Build Vector Index
 
 ```bash
 # Generate chunks and build ChromaDB index
 python build_chroma_only.py
 ```
 
-### 5. Start Services
+### 6. Start Services
 
 #### Method 1: Direct Run
 ```bash
@@ -101,6 +113,9 @@ python system_rag_server.py serve
 
 #### Method 2: Docker Deployment
 ```bash
+# Ensure .cache folder is present (download from Google Drive if needed)
+# Link: https://drive.google.com/file/d/1U6EnatdRLHZ4PT0VnNVdGp-asY_Q7BkU/view?usp=sharing
+
 # Build image
 docker build -t system-rag:latest .
 
