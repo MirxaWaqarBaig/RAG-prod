@@ -1,0 +1,88 @@
+version: "3.9"
+
+services:
+  # Message broker for ZMQ communication
+  broker:
+    image: ss-broker
+    container_name: sharestyle-broker
+    ports:
+      - "5559:5559"
+      - "5560:5560"
+    environment:
+      - ZMQ_FRONTEND_ROUTER_PORT=5559
+      - ZMQ_BACKEND_ROUTER_PORT=5560
+    networks:
+      - rag-net
+
+  # PostgreSQL for semantic cache
+  postgres:
+    image: bitnami/postgresql:latest
+    container_name: postgres-rag
+    environment:
+      POSTGRES_DB: semantic_cache
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - pg_data:/bitnami/postgresql
+    networks:
+      - rag-net
+
+  # Graph RAG Server with knowledge graph
+  system-rag-server:
+    build: .
+    image: system-rag:latest
+    container_name: system-rag-server
+    environment:
+      - DEVICE=cuda
+      - ZMQ_BACKEND_ROUTER_URL=tcp://sharestyle-broker:5560
+      - PG_HOST=postgres
+      - PG_PORT=5432
+      - PG_DBNAME=semantic_cache
+      - PG_USER=postgres
+      - PG_PASSWORD=postgres
+      - SIMILARITY_THRESHOLD=0.75
+      - EMBEDDING_MODEL=shibing624/text2vec-base-chinese
+      - RAG_SYSTEM_MODE=${RAG_SYSTEM_MODE:-system_prompt}
+      - DEEPSEEK_API_KEY=sk-f53c583fd23140588ff0be9cc4fefa78
+      - DASHSCOPE_API_KEY=sk-90b6abdf61194df1b0b31a941f53e9b6
+      - RAG_RELOAD_INTERVAL=120
+    depends_on:
+      - postgres
+      - broker
+    networks:
+      - rag-net
+    volumes:
+      - ./input:/app/input
+      - ./.cache:/app/.cache
+      - ./chromadb:/app/chromadb
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    command: ["python", "system_rag_server.py", "serve"]
+
+  # API Gateway
+  gateway:
+    image: ss-gateway
+    container_name: sharestyle-gateway
+    ports:
+      - "8000:8008"
+    environment:
+      - ZMQ_FRONTEND_ROUTER_URL=tcp://sharestyle-broker:5559
+    depends_on:
+      - broker
+      - system-rag-server
+    networks:
+      - rag-net
+
+networks:
+  rag-net:
+    driver: bridge
+
+volumes:
+  pg_data:
