@@ -45,8 +45,8 @@ services:
       - SIMILARITY_THRESHOLD=0.75
       - EMBEDDING_MODEL=shibing624/text2vec-base-chinese
       - RAG_SYSTEM_MODE=${RAG_SYSTEM_MODE:-system_prompt}
-      - DEEPSEEK_API_KEY=sk-f53c583fd23140588ff0be9cc4fefa78
-      - DASHSCOPE_API_KEY=sk-90b6abdf61194df1b0b31a941f53e9b6
+      - DEEPSEEK_API_KEY=sk-
+      - DASHSCOPE_API_KEY=sk-
       - RAG_RELOAD_INTERVAL=120
     depends_on:
       - postgres
